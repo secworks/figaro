@@ -12,4 +12,4 @@ FPGAs.
 Ring Oscillators for FPGA](https://www.mdpi.com/2076-3417/11/8/3330/pdf)
 
 
-[2 ][Improving ring-oscillator-based true random number generators using multiple sampling)(https://hanyang.elsevierpure.com/en/publications/improving-ring-oscillator-based-true-random-number-generators-usi)
+[2] [Improving ring-oscillator-based true random number generators using multiple sampling](https://hanyang.elsevierpure.com/en/publications/improving-ring-oscillator-based-true-random-number-generators-usi)
