@@ -11,7 +11,8 @@ FPGAs.
 The implementation instantiates four FiRO and four GaRO modules. The
 modules includes state sampling. The polynomials used are given by
 equotions (9)..(16) in paper [1]. The eight outputs are then XORed
-toghether to form a one bit sample value.
+together to form a one bit sample value. The sample rate is controlled
+by a 24 bit divisor.
 
 
 ## Implementation results
