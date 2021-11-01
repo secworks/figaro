@@ -1,6 +1,11 @@
 # figaro
 Implementation of the FiGaRO TRNG for FPGAs
 
+
+## Status
+Just started. Does not work. **Do. NOT Use**
+
+
 ## Introduction
 This repo contains (will contain) a test implementation of the FiGaRO
 true random number generator (TRNG) [1]. The main target is Lattice iCE40
