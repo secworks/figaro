@@ -72,6 +72,11 @@ module figaro_core (
   wire firo2_rnd;
   wire firo3_rnd;
 
+  wire garo0_rnd;
+  wire garo1_rnd;
+  wire garo2_rnd;
+  wire garo3_rnd;
+
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
@@ -82,6 +87,7 @@ module figaro_core (
   //----------------------------------------------------------------
   // Module instantiations
   //----------------------------------------------------------------
+  // FiRO oscillators.
   // 1 + x + x2 + x3 + x5 + x6 + x7 + x8 + x9 + x10
   firo (#POLY = 10'b1111110111)
   firo0 (
@@ -120,6 +126,41 @@ module figaro_core (
         );
 
 
+  // GaRO oscillators. POLY needs to
+  // be corrected.
+  garo (#POLY = 10'b1101111111)
+  garo0 (
+         .clk(clk),
+         .reset_n(reset_n),
+         .en(enable_reg),
+         .rnd(garo0_rnd)
+        );
+
+  garo (#POLY = 10'b1101111111)
+  garo1 (
+         .clk(clk),
+         .reset_n(reset_n),
+         .en(enable_reg),
+         .rnd(garo1_rnd)
+        );
+
+  garo (#POLY = 10'b1101111111)
+  garo2 (
+         .clk(clk),
+         .reset_n(reset_n),
+         .en(enable_reg),
+         .rnd(garo2_rnd)
+        );
+
+  garo (#POLY = 10'b1101111111)
+  garo3 (
+         .clk(clk),
+         .reset_n(reset_n),
+         .en(enable_reg),
+         .rnd(garo3_rnd)
+        );
+
+
   //----------------------------------------------------------------
   // reg_update
   //
@@ -154,7 +195,10 @@ module figaro_core (
   always @*
     begin : figaro_logic
       rnd_we  = 1'h0;
-      rnd_new = firo0_rnd ^ firo1_rnd ^ firo2_rnd ^ firo3_rnd;
+
+      rnd_new = firo0_rnd ^ firo1_rnd ^ firo2_rnd ^ firo3_rnd ^
+                garo0_rnd ^ garo1_rnd ^ garo2_rnd ^ garo3_rnd;
+
 
       if (sample_rate_ctr_reg < SAMPLE_DIVIDOR) begin
         sample_rate_ctr_new = sample_rate_ctr_reg + 1'h1;
