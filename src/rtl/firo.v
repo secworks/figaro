@@ -67,10 +67,10 @@ module firo (parameter POLY = 10'b1111111111)
   // reg_update
   //
   // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with asynchronous
+  // All registers are positive edge triggered with synchronous
   // active low reset.
   //----------------------------------------------------------------
-  always @ (posedge clk or negedge reset_n)
+  always @ (posedge clk)
     begin: reg_update
       if (!reset_n)
         begin
@@ -97,17 +97,17 @@ module firo (parameter POLY = 10'b1111111111)
                   (POLY[6] & f[07]) ^ (POLY[7] & f[08]) ^
                   (POLY[8] & f[09]) ^ (POLY[9] & f[10]);
 
-      f[10] = ~f[09];
-      f[09] = ~f[08];
-      f[08] = ~f[07];
-      f[07] = ~f[06];
-      f[06] = ~f[05];
-      f[05] = ~f[04];
-      f[04] = ~f[03];
-      f[03] = ~f[02];
-      f[02] = ~f[01];
-      f[01] = ~f[00];
       f[00] = xor_chain & en;
+      f[01] = ~f[00];
+      f[02] = ~f[01];
+      f[03] = ~f[02];
+      f[04] = ~f[03];
+      f[05] = ~f[04];
+      f[06] = ~f[05];
+      f[07] = ~f[06];
+      f[08] = ~f[07];
+      f[09] = ~f[08];
+      f[10] = ~f[09];
 
       sample_new = f[10 : 1];
 
