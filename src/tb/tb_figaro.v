@@ -47,27 +47,18 @@ module tb_figaro();
   parameter DUMP_WAIT = 0;
 
   parameter CLK_HALF_PERIOD = 1;
-  parameter CLK_PERIOD = 2 * CLK_HALF_PERIOD;
+  parameter CLK_PERIOD      = 2 * CLK_HALF_PERIOD;
 
-  localparam ADDR_NAME0       = 8'h00;
-  localparam ADDR_NAME1       = 8'h01;
-  localparam ADDR_VERSION     = 8'h02;
+  localparam ADDR_NAME0        = 8'h00;
+  localparam ADDR_NAME1        = 8'h01;
+  localparam ADDR_VERSION      = 8'h02;
 
-  localparam ADDR_CTRL        = 8'h08;
-  localparam CTRL_INIT_BIT    = 0;
-  localparam CTRL_UPDATE_BIT  = 1;
-  localparam CTRL_FINISH_BIT  = 2;
+  localparam ADDR_STATUS       = 8'h09;
+  localparam STATUS_READY_BIT  = 0;
 
-  localparam ADDR_STATUS      = 8'h09;
-  localparam STATUS_READY_BIT = 0;
+  localparam ADDR_SAMPLE_RATE  = 8'h10;
 
-  localparam ADDR_BLOCKLEN    = 8'h0a;
-
-  localparam ADDR_BLOCK0      = 8'h10;
-  localparam ADDR_BLOCK15     = 8'h1f;
-
-  localparam ADDR_DIGEST0     = 8'h40;
-  localparam ADDR_DIGEST7     = 8'h47;
+  localparam ADDR_ENTROPY      = 8'h20;
 
 
   //----------------------------------------------------------------
@@ -327,6 +318,9 @@ module tb_figaro();
 
       $display("");
       $display("--- test_read_trng: Started.");
+
+      $display("--- test_read_trng: Setting a short sample rate..");
+      read_word(ADDR_NAME0);
 
       $display("--- test_read_trng: Completed.\n");
       $display("");
