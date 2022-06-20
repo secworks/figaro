@@ -39,79 +39,59 @@
 
 `default_nettype none
 
-module firo (parameter POLY = 10'b1111111111)
-       (
-        input wire  clk,
-        input wire  reset_n,
+module firo(
+            input wire clk,
+            output wire entropy
+            );
 
-        input wire  en,
-
-        output wire rnd
-       );
+  parameter POLY = 10'b1111111111;
 
 
   //----------------------------------------------------------------
-  // Registers including update variables and write enable.
+  // Registers and wires.
   //----------------------------------------------------------------
-  reg [9 : 0] sample_reg;
-  reg [9 : 0] sample_new;
+  reg entropy_reg;
+  wire [10 : 0] f;
+
+
+  //---------------------------------------------------------------
+  // Combinational loop inverters.
+  //---------------------------------------------------------------
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv1  (.I0(f[0]), .O(f[1]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv2  (.I0(f[1]), .O(f[2]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv3  (.I0(f[2]), .O(f[3]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv4  (.I0(f[3]), .O(f[4]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv5  (.I0(f[4]), .O(f[5]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv6  (.I0(f[5]), .O(f[6]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv7  (.I0(f[6]), .O(f[7]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv8  (.I0(f[7]), .O(f[8]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv9  (.I0(f[8]), .O(f[9]));
+  (* keep *) SB_LUT4 #(.LUT_INIT(1'b1)) osc_inv10 (.I0(f[9]), .O(f[10]));
+
+
+  //---------------------------------------------------------------
+  // parameterized feedback logic.
+  //---------------------------------------------------------------
+  assign f[0] = (POLY[0] & f[1]) ^ (POLY[1] & f[2]) ^
+                (POLY[2] & f[3]) ^ (POLY[3] & f[4]) ^
+                (POLY[4] & f[5]) ^ (POLY[5] & f[6]) ^
+                (POLY[6] & f[7]) ^ (POLY[7] & f[8]) ^
+                (POLY[8] & f[9]) ^ (POLY[9] & f[10]);
 
 
   //----------------------------------------------------------------
   // Concurrent connectivity for ports etc.
   //----------------------------------------------------------------
-  assign rnd = ^sample_reg;
+  assign entropy = entropy_reg;
 
 
-  //----------------------------------------------------------------
+  //---------------------------------------------------------------
   // reg_update
-  //
-  // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset.
-  //----------------------------------------------------------------
-  always @ (posedge clk)
-    begin: reg_update
-      if (!reset_n)
-        begin
-          sample_reg <= 10'h0;
-        end
-      else
-        begin
-          sample_reg <= sample_new;
-        end
-    end // reg_update
-
-
-  //----------------------------------------------------------------
-  // firo_logic;
-  //----------------------------------------------------------------
-  always @*
-    begin : firo_logic
-      reg [10 : 0] f;
-      reg [9 : 0]  xor_chain;
-
-      xor_chain = (POLY[0] & f[01]) ^ (POLY[1] & f[02]) ^
-                  (POLY[2] & f[03]) ^ (POLY[3] & f[04]) ^
-                  (POLY[4] & f[05]) ^ (POLY[5] & f[06]) ^
-                  (POLY[6] & f[07]) ^ (POLY[7] & f[08]) ^
-                  (POLY[8] & f[09]) ^ (POLY[9] & f[10]);
-
-      f[00] = xor_chain & en;
-      f[01] = ~f[00];
-      f[02] = ~f[01];
-      f[03] = ~f[02];
-      f[04] = ~f[03];
-      f[05] = ~f[04];
-      f[06] = ~f[05];
-      f[07] = ~f[06];
-      f[08] = ~f[07];
-      f[09] = ~f[08];
-      f[10] = ~f[09];
-
-      sample_new = f[10 : 1];
-
-    end // firo_logic
+  //---------------------------------------------------------------
+  always @(posedge clk)
+    begin : reg_update
+      entropy_reg <= ^f;
+    end
 
 endmodule // firo
 

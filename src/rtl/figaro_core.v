@@ -1,14 +1,11 @@
 //======================================================================
-//
 // figaro_core.v
-// -------------
-// Fibonacci and Galois Ring Oscillator based true random
-// number source. The sample rate is controlled by a
-// divisor.
+// -----------
+// FiGaRO based FIGARO for iCE40 device.
 //
 //
 // Author: Joachim Strombergson
-// Copyright (c) 2021, Assured AB
+// Copyright (c) 2022, Assured AB
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or
@@ -35,181 +32,174 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 // ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-//
 //======================================================================
 
-`default_nettype none
+module figaro_core(
+	           input wire 	        clk,
+                   input wire           reset_n,
 
-module figaro_core (
-                    input wire          clk,
-                    input wire          reset_n,
+                   input wire           read_entropy,
+                   output wire [31 : 0] entropy,
 
-                    input wire          enable,
-                    input wire [23 : 0] divsor;
-
-                    output wire         rnd
-                   );
+                   output wire          ready
+	          );
 
 
-  //----------------------------------------------------------------
+  //---------------------------------------------------------------
+  // Local parameters.
+  //---------------------------------------------------------------
+  localparam SAMPLE_RATE_CTR_WIDTH = 24;
+  localparam DEFAULT_SAMPLE_RATE   = 24'h010000;
+
+
+  //---------------------------------------------------------------
   // Registers.
-  //----------------------------------------------------------------
-  reg en_reg;
-
-  reg rnd_reg;
-  reg rnd_new;
-  reg rnd_we;
-
+  //---------------------------------------------------------------
   reg [23 : 0] sample_rate_ctr_reg;
   reg [23 : 0] sample_rate_ctr_new;
 
+  reg [4 : 0]  bit_ctr_reg;
+  reg [4 : 0]  bit_ctr_new;
+  reg          bit_ctr_rst;
+  reg          bit_ctr_inc;
+  reg          bit_ctr_we;
 
-  //----------------------------------------------------------------
-  // Wires.
-  //----------------------------------------------------------------
-  wire firo0_rnd;
-  wire firo1_rnd;
-  wire firo2_rnd;
-  wire firo3_rnd;
+  reg [31 : 0] entropy_reg;
+  reg [31 : 0] entropy_new;
+  reg          entropy_we;
 
-  wire garo0_rnd;
-  wire garo1_rnd;
-  wire garo2_rnd;
-  wire garo3_rnd;
-
-
-  //----------------------------------------------------------------
-  // Concurrent connectivity for ports etc.
-  //----------------------------------------------------------------
-  assign rnd = rnd_reg;
+  reg          ready_reg;
+  reg          ready_new;
+  reg          ready_we;
 
 
-  //----------------------------------------------------------------
-  // Module instantiations
-  //----------------------------------------------------------------
-  // FiRO oscillators.
-  // 1 + x + x2 + x3 + x5 + x6 + x7 + x8 + x9 + x10
-  firo (#POLY = 10'b1111110111)
-  firo0 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(en_reg),
-         .rnd(firo0_rnd)
-        );
+  //---------------------------------------------------------------
+  // Firo oscillator instances and XOR combined result.
+  //---------------------------------------------------------------
+  wire firo_ent[3 : 0];
+  wire firo_entropy;
+
+  firo #(.POLY(10'b1111110111)) firo0(.clk(clk), .entropy(firo_ent[0]));
+  firo #(.POLY(10'b1011111001)) firo1(.clk(clk), .entropy(firo_ent[1]));
+  firo #(.POLY(10'b1100000001)) firo2(.clk(clk), .entropy(firo_ent[2]));
+  firo #(.POLY(10'b1011111111)) firo3(.clk(clk), .entropy(firo_ent[3]));
+
+  assign firo_entropy = firo_ent[0] ^ firo_ent[1] ^
+                        firo_ent[2] ^ firo_ent[3];
 
 
-  // 1 + x + x2 + x3 + x4 + x6 + x7 + x10
-  firo (#POLY = 10'b1001101111)
-  firo1 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(en_reg),
-         .rnd(firo1_rnd)
-        );
+  //---------------------------------------------------------------
+  // garo oscillator instances and XOR combined result.
+  //---------------------------------------------------------------
+  wire garo_ent[3 : 0];
+  wire garo_entropy;
 
-  // 1 + x + x2 + x3 + x4 + x5 + x6 + x10
-  firo (#POLY = 10'b1000111111)
-  firo2 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(en_reg),
-         .rnd(firo2_rnd)
-        );
+  firo #(.POLY(11'b11111101111)) garo0(.clk(clk), .entropy(garo_ent[0]));
+  firo #(.POLY(11'b10111110011)) garo1(.clk(clk), .entropy(garo_ent[1]));
+  firo #(.POLY(11'b11000000011)) garo2(.clk(clk), .entropy(garo_ent[2]));
+  firo #(.POLY(11'b10111111111)) garo3(.clk(clk), .entropy(garo_ent[3]));
 
-  // 1 + x + x2 + x3 + x4 + x5 + x6 + x7 + x9 + x10
-  firo (#POLY = 10'b1101111111)
-  firo3 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(enable_reg),
-         .rnd(firo3_rnd)
-        );
+  assign garo_entropy = garo_ent[0] ^ garo_ent[1] ^
+                        garo_ent[2] ^ garo_ent[3];
 
 
-  // GaRO oscillators. POLY needs to
-  // be corrected.
-  garo (#POLY = 10'b1101111111)
-  garo0 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(enable_reg),
-         .rnd(garo0_rnd)
-        );
-
-  garo (#POLY = 10'b1101111111)
-  garo1 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(enable_reg),
-         .rnd(garo1_rnd)
-        );
-
-  garo (#POLY = 10'b1101111111)
-  garo2 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(enable_reg),
-         .rnd(garo2_rnd)
-        );
-
-  garo (#POLY = 10'b1101111111)
-  garo3 (
-         .clk(clk),
-         .reset_n(reset_n),
-         .en(enable_reg),
-         .rnd(garo3_rnd)
-        );
+  //---------------------------------------------------------------
+  // Assignments.
+  //---------------------------------------------------------------
+  assign ready   = ready_reg;
+  assign entropy = entropy_reg;
 
 
-  //----------------------------------------------------------------
+  //---------------------------------------------------------------
   // reg_update
+  //---------------------------------------------------------------
+  always @(posedge clk)
+     begin : reg_update
+       if (!reset_n) begin
+         sample_rate_ctr_reg <= 24'h0;
+         bit_ctr_reg         <= 5'h0;
+         entropy_reg         <= 32'h0;
+         ready_reg           <= 1'h0;
+       end
+       else begin
+         sample_rate_ctr_reg <= sample_rate_ctr_new;
+
+         if (bit_ctr_we) begin
+           bit_ctr_reg <= bit_ctr_new;
+         end
+
+         if (entropy_we) begin
+           entropy_reg <= entropy_new;
+         end
+
+         if (ready_we) begin
+           ready_reg <= ready_new;
+         end
+       end
+     end
+
+
+  //---------------------------------------------------------------
+  // ready_logic
   //
-  // Update functionality for all registers in the core.
-  // All registers are positive edge triggered with synchronous
-  // active low reset.
-  //----------------------------------------------------------------
-  always @ (posedge clk)
-    begin: reg_update
-      if (!reset_n)
-        begin
-          en_reg              <= 1'h0;
-          rnd_reg             <= 1'h0;
-          sample_rate_ctr_reg <= 24'h0;
-        end
-      else
-        begin
-          en_reg              <= en;
-          sample_rate_ctr_reg <= sample_rate_ctr_new;
-
-          if (rnd_we) begin
-            rnd_reg <= rnd_new;
-          end
-
-        end
-    end // reg_update
-
-
-  //----------------------------------------------------------------
-  // figaro_logic
-  //----------------------------------------------------------------
+  // After an entropy word has been read we wait 32 bits before
+  // setting ready again, indicating that a new word is ready.
+  //---------------------------------------------------------------
   always @*
-    begin : figaro_logic
-      rnd_we  = 1'h0;
+    begin : ready_logic;
+      ready_new  = 1'h0;
+      ready_we   = 1'h0;
 
-      rnd_new = firo0_rnd ^ firo1_rnd ^ firo2_rnd ^ firo3_rnd ^
-                garo0_rnd ^ garo1_rnd ^ garo2_rnd ^ garo3_rnd;
-
-
-      if (sample_rate_ctr_reg < SAMPLE_DIVIDOR) begin
-        sample_rate_ctr_new = sample_rate_ctr_reg + 1'h1;
+      if (bit_ctr_rst) begin
+        bit_ctr_new = 5'h0;
+        bit_ctr_we  = 1'h1;
+        ready_new   = 1'h0;
+        ready_we    = 1'h1;
       end
-      else begin
-        sample_rate_ctr_new = 24'h0;
-        rnd_we              = 1'h1;
+
+      else if (bit_ctr_inc) begin
+        if (bit_ctr_reg == 5'h1f) begin
+          ready_new   = 1'h1;
+          ready_we    = 1'h1;
+        end
+
+        else begin
+          bit_ctr_new = bit_ctr_reg + 1'h1;
+          bit_ctr_we = 1'h1;
+        end
       end
     end
 
-endmodule // figaro
+
+  //---------------------------------------------------------------
+  // figaro_sample_logic
+  //
+  // Wait SAMPLE_RATE number of cycles between sampling a bit
+  // from the entropy source.
+  //---------------------------------------------------------------
+  always @*
+    begin : figaro_sample_logic
+      bit_ctr_rst = 1'h0;
+      bit_cre_inc = 1'h0;
+      entropy_we  = 1'h0;
+
+      entropy_new = {entropy_reg[30 : 0], firo_entropy ^ garo_entropy};
+
+      if (read_entropy) begin
+        bit_ctr_rst = 1'h1;
+      end
+
+      if (sample_rate_ctr_reg == SAMPLE_RATE) begin
+        sample_rate_ctr_new = 24'h0;
+        entropy_we          = 1'h1;
+        bit_ctr_inc         = 1'h1;
+      end
+      else begin
+        sample_rate_ctr_new = sample_rate_ctr + 1'h1;
+      end
+    end
+
+endmodule // figaro_core
 
 //======================================================================
 // EOF figaro_core.v
