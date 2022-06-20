@@ -40,6 +40,7 @@
 # Source and constraints.
 CORE_SRC = ../src/rtl/firo.v ../src/rtl/garo.v ../src/rtl/figaro_core.v
 TOP_SRC = ../src/rtl/figaro.v $(CORE_SRC)
+TB_TOP_SRC = ../src/tb/tb_figaro.v
 
 SIM_SRC = ../src/sim/SB_LUT4.v
 
@@ -70,7 +71,7 @@ BLIF_FILE = $(TARGET_STEM).blif
 
 
 # Targets.
-all:	lint
+all:	top.lint top.sim
 
 #$(BIN_FILE):	$(ASC_FILE)
 #	icepack	$< $@
@@ -89,7 +90,11 @@ all:	lint
 #	icetime -tmd $(ICETIME_DEVICE) $<
 
 
-lint:  $(TOP_SRC) $(SIM_SRC)
+top.sim:  $(TB_TOP_SRC) $(TOP_SRC) $(SIM_SRC)
+	$(CC) $(CC_FLAGS) -o $@ $^
+
+
+top.lint:  $(TOP_SRC) $(SIM_SRC)
 	$(LINT) $(LINT_FLAGS) $^
 
 
@@ -105,10 +110,10 @@ help:
 	@echo ""
 	@echo "Supported targets:"
 	@echo "------------------"
-	@echo "all:     Build all targets."
-	@echo "top.sim: Build top level simulation target."
-	@echo "lint:    Lint all rtl source files."
-	@echo "clean:   Delete all artifacts and support files."
+	@echo "all:      Build all targets."
+	@echo "top.sim:  Build top level simulation target."
+	@echo "top.lint: Lint top level source files."
+	@echo "clean:    Delete all artifacts and support files."
 
 #===================================================================
 # Makefile
