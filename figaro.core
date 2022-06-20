@@ -1,0 +1,42 @@
+CAPI=2:
+
+name : secworks:crypto:figaro:0
+
+filesets:
+  rtl:
+    files:
+      - src/rtl/figaro.v
+      - src/rtl/figaro_core.v
+      - src/rtl/firo.v
+      - src/rtl/garo.v
+      - src/sim/SB_LUT4.v
+    file_type : verilogSource
+
+  tb:
+    files:
+      - src/tb/tb_figaro.v
+    file_type : verilogSource
+
+  openlane: {files : [data/sky130.tcl : {file_type : tclSource}]}
+
+targets:
+  default:
+    filesets: [rtl]
+
+  lint:
+    default_tool : verilator
+    filesets : [rtl]
+    tools:
+      verilator:
+        mode : lint-only
+    toplevel : figaro
+
+  sky130:
+    default_tool: openlane
+    filesets: [rtl, openlane]
+    toplevel: figaro
+
+  tb_blake2s : &tb
+    default_tool: icarus
+    filesets: [rtl, tb]
+    toplevel : tb_figaro
