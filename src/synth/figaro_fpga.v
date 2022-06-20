@@ -60,10 +60,10 @@ module figaro_fpga(
 
 
   // State for control FSM.
-  localparam CTRL_IDLE         = 0;
-  localparam CTRL_WAIT_READY1  = 1;
-  localparam CTRL_WAIT_READY2  = 2;
-  localparam CTRL_READ_ENTOPY1 = 3;
+  localparam CTRL_IDLE          = 0;
+  localparam CTRL_WAIT_READY1   = 1;
+  localparam CTRL_WAIT_READY2   = 2;
+  localparam CTRL_READ_ENTROPY1 = 3;
 
 
   // 12 MHz / 32 to get a word one per second.
@@ -73,8 +73,8 @@ module figaro_fpga(
   //---------------------------------------------------------------
   // Registers.
   //---------------------------------------------------------------
-  reg [31 : 0] entropy_reg
-  reg          entropy_we
+  reg [31 : 0] entropy_reg;
+  reg          entropy_we;
 
   reg [2 : 0] fpga_ctrl_reg;
   reg [2 : 0] fpga_ctrl_new;
@@ -105,7 +105,7 @@ module figaro_fpga(
                      .reset_n(reset_n),
 
                      .cs(figaro_cs),
-                     .cs(figaro_we),
+                     .we(figaro_we),
                      .address(figaro_address),
                      .write_data(figaro_write_data),
                      .read_data(figaro_read_data)
