@@ -48,7 +48,6 @@ module figaro_core(
   //---------------------------------------------------------------
   // Local parameters.
   //---------------------------------------------------------------
-  localparam SAMPLE_RATE_CTR_WIDTH = 24;
   localparam DEFAULT_SAMPLE_RATE   = 24'h010000;
 
 
@@ -94,10 +93,10 @@ module figaro_core(
   wire garo_ent[3 : 0];
   wire garo_entropy;
 
-  firo #(.POLY(11'b11111101111)) garo0(.clk(clk), .entropy(garo_ent[0]));
-  firo #(.POLY(11'b10111110011)) garo1(.clk(clk), .entropy(garo_ent[1]));
-  firo #(.POLY(11'b11000000011)) garo2(.clk(clk), .entropy(garo_ent[2]));
-  firo #(.POLY(11'b10111111111)) garo3(.clk(clk), .entropy(garo_ent[3]));
+  garo #(.POLY(11'b11111101111)) garo0(.clk(clk), .entropy(garo_ent[0]));
+  garo #(.POLY(11'b10111110011)) garo1(.clk(clk), .entropy(garo_ent[1]));
+  garo #(.POLY(11'b11000000011)) garo2(.clk(clk), .entropy(garo_ent[2]));
+  garo #(.POLY(11'b10111111111)) garo3(.clk(clk), .entropy(garo_ent[3]));
 
   assign garo_entropy = garo_ent[0] ^ garo_ent[1] ^
                         garo_ent[2] ^ garo_ent[3];
@@ -147,8 +146,11 @@ module figaro_core(
   //---------------------------------------------------------------
   always @*
     begin : ready_logic;
-      ready_new  = 1'h0;
-      ready_we   = 1'h0;
+      bit_ctr_new = 5'h0;
+      bit_ctr_we  = 1'h0;
+      ready_new   = 1'h0;
+      ready_we    = 1'h0;
+
 
       if (bit_ctr_rst) begin
         bit_ctr_new = 5'h0;
@@ -180,7 +182,7 @@ module figaro_core(
   always @*
     begin : figaro_sample_logic
       bit_ctr_rst = 1'h0;
-      bit_cre_inc = 1'h0;
+      bit_ctr_inc = 1'h0;
       entropy_we  = 1'h0;
 
       entropy_new = {entropy_reg[30 : 0], firo_entropy ^ garo_entropy};
@@ -189,13 +191,13 @@ module figaro_core(
         bit_ctr_rst = 1'h1;
       end
 
-      if (sample_rate_ctr_reg == SAMPLE_RATE) begin
+      if (sample_rate_ctr_reg == DEFAULT_SAMPLE_RATE) begin
         sample_rate_ctr_new = 24'h0;
         entropy_we          = 1'h1;
         bit_ctr_inc         = 1'h1;
       end
       else begin
-        sample_rate_ctr_new = sample_rate_ctr + 1'h1;
+        sample_rate_ctr_new = sample_rate_ctr_reg + 1'h1;
       end
     end
 

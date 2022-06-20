@@ -40,7 +40,7 @@
 `default_nettype none
 
 module firo(
-            input wire clk,
+            input wire  clk,
             output wire entropy
             );
 

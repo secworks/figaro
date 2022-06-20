@@ -44,7 +44,9 @@ module SB_LUT4(
                output wire O
               );
 
-  assign O = ~I0;
+  parameter LUT_INIT = 1'h1;
+
+  assign O = I0 ^ LUT_INIT;
 
 endmodule // SB_LUT4
 

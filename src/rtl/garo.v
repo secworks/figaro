@@ -40,7 +40,7 @@
 `default_nettype none
 
 module garo(
-            input wire clk,
+            input wire  clk,
             output wire entropy
             );
 
