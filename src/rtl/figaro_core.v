@@ -38,6 +38,9 @@ module figaro_core(
 	           input wire 	        clk,
                    input wire           reset_n,
 
+                   input wire           set_sample_rate,
+		   input wire [23 : 0]  sample_rate,
+
                    input wire           read_entropy,
                    output wire [31 : 0] entropy,
 
@@ -48,7 +51,7 @@ module figaro_core(
   //---------------------------------------------------------------
   // Local parameters.
   //---------------------------------------------------------------
-  localparam DEFAULT_SAMPLE_RATE   = 24'h010000;
+  localparam DEFAULT_SAMPLE_RATE = 24'h010000;
 
 
   //---------------------------------------------------------------
@@ -56,6 +59,9 @@ module figaro_core(
   //---------------------------------------------------------------
   reg [23 : 0] sample_rate_ctr_reg;
   reg [23 : 0] sample_rate_ctr_new;
+
+  reg [23 : 0] sample_rate_reg;
+  reg          sample_rate_we;
 
   reg [4 : 0]  bit_ctr_reg;
   reg [4 : 0]  bit_ctr_new;
@@ -115,6 +121,7 @@ module figaro_core(
   always @(posedge clk)
      begin : reg_update
        if (!reset_n) begin
+         sample_rate_reg     <= DEFAULT_SAMPLE_RATE;
          sample_rate_ctr_reg <= 24'h0;
          bit_ctr_reg         <= 5'h0;
          entropy_reg         <= 32'h0;
@@ -122,6 +129,10 @@ module figaro_core(
        end
        else begin
          sample_rate_ctr_reg <= sample_rate_ctr_new;
+
+	 if (sample_rate_we) begin
+	   sample_rate_reg <= sample_rate;
+	 end
 
          if (bit_ctr_we) begin
            bit_ctr_reg <= bit_ctr_new;
@@ -176,14 +187,15 @@ module figaro_core(
   //---------------------------------------------------------------
   // figaro_sample_logic
   //
-  // Wait SAMPLE_RATE number of cycles between sampling a bit
+  // Wait sample_rate_reg number of cycles between sampling a bit
   // from the entropy source.
   //---------------------------------------------------------------
   always @*
     begin : figaro_sample_logic
-      bit_ctr_rst = 1'h0;
-      bit_ctr_inc = 1'h0;
-      entropy_we  = 1'h0;
+      sample_rate_we = 1'h0;
+      bit_ctr_rst    = 1'h0;
+      bit_ctr_inc    = 1'h0;
+      entropy_we     = 1'h0;
 
       entropy_new = {entropy_reg[30 : 0], firo_entropy ^ garo_entropy};
 
@@ -191,11 +203,18 @@ module figaro_core(
         bit_ctr_rst = 1'h1;
       end
 
-      if (sample_rate_ctr_reg == DEFAULT_SAMPLE_RATE) begin
+      if (set_sample_rate) begin
+	bit_ctr_rst         = 1'h1;
+	sample_rate_we      = 1'h1;
+        sample_rate_ctr_new = 24'h0;
+      end
+
+      else if (sample_rate_ctr_reg == sample_rate_reg) begin
         sample_rate_ctr_new = 24'h0;
         entropy_we          = 1'h1;
         bit_ctr_inc         = 1'h1;
       end
+
       else begin
         sample_rate_ctr_new = sample_rate_ctr_reg + 1'h1;
       end

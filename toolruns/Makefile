@@ -71,7 +71,7 @@ BLIF_FILE = $(TARGET_STEM).blif
 
 
 # Targets.
-all:	top.lint top.sim
+all:	lint-top sim-top
 
 #$(BIN_FILE):	$(ASC_FILE)
 #	icepack	$< $@
@@ -90,16 +90,16 @@ all:	top.lint top.sim
 #	icetime -tmd $(ICETIME_DEVICE) $<
 
 
-top.sim:  $(TB_TOP_SRC) $(TOP_SRC) $(SIM_SRC)
+sim-top:  $(TB_TOP_SRC) $(TOP_SRC) $(SIM_SRC)
 	$(CC) $(CC_FLAGS) -o $@ $^
 
 
-top.lint:  $(TOP_SRC) $(SIM_SRC)
+lint-top:  $(TOP_SRC) $(SIM_SRC)
 	$(LINT) $(LINT_FLAGS) $^
 
 
 clean:
-	rm -f *.sim
+	rm -f sim-*
 	rm -f *.log
 	rm -f *.txt
 	rm -f $(BIN_FILE) $(ASC_FILE) $(BLIF_FILE) $(JSON_FILE) $(YOSYS_LOG)
@@ -111,8 +111,8 @@ help:
 	@echo "Supported targets:"
 	@echo "------------------"
 	@echo "all:      Build all targets."
-	@echo "top.sim:  Build top level simulation target."
-	@echo "top.lint: Lint top level source files."
+	@echo "sim-top:  Build top level simulation target."
+	@echo "lint-top: Lint top level source files."
 	@echo "clean:    Delete all artifacts and support files."
 
 #===================================================================

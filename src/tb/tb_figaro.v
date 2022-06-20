@@ -290,6 +290,8 @@ module tb_figaro();
       reg [31 : 0] name1;
       reg [31 : 0] version;
 
+      tc_ctr = tc_ctr + 1;
+
       $display("");
       $display("--- test_name_version: Started.");
 
