@@ -140,7 +140,16 @@ module tb_figaro();
       $display("-------------------------------------------------------------------------------------");
       $display("DUT internal state at cycle: %08d", cycle_ctr);
       $display("-------------------------------------");
-
+      $display("ready:       0x%1x", dut.core.ready_reg);
+      $display("bit_ctr_reg: 0x%02x", dut.core.bit_ctr_reg);
+      $display("bit_ctr_rst: 0x%1x", dut.core.bit_ctr_rst);
+      $display("bit_ctr_inc: 0x%1x", dut.core.bit_ctr_inc);
+      $display("");
+      $display("sample_rate_ctr_reg: 0x%06x", dut.core.sample_rate_ctr_reg);
+      $display("sample_rate_reg:     0x%06x", dut.core.sample_rate_reg);
+      $display("");
+      $display("entropy: 0x%08x", dut.core.entropy_reg);
+      $display("read_entropy: 0x%1x", dut.core.read_entropy);
       $display("-------------------------------------------------------------------------------------");
       $display("-------------------------------------------------------------------------------------");
       $display("");
@@ -314,13 +323,27 @@ module tb_figaro();
   //----------------------------------------------------------------
   task test_read_trng;
     begin : test_read_trng
+      integer i;
       tc_ctr = tc_ctr + 1;
+      tb_monitor = 1'h1;
 
       $display("");
       $display("--- test_read_trng: Started.");
 
-      $display("--- test_read_trng: Setting a short sample rate..");
-      read_word(ADDR_NAME0);
+      $display("--- test_read_trng: Setting a short sample rate.");
+      write_word(ADDR_SAMPLE_RATE, 32'h3);
+      #(CLK_PERIOD);
+
+      $display("--- test_read_trng: Reading five entropy words.");
+      for (i = 1 ; i < 6 ; i = i + 1) begin
+	$display("--- test_read_trng: Waiting for ready to be set.");
+	wait_ready();
+	read_word(ADDR_ENTROPY);
+	$display("--- test_read_trng: Entropy word %02d: 0x%08x", i, read_data);
+      end
+
+      #(CLK_PERIOD);
+      tb_monitor = 1'h0;
 
       $display("--- test_read_trng: Completed.\n");
       $display("");
