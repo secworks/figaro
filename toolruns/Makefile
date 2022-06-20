@@ -43,15 +43,16 @@ TOP_SRC = ../src/rtl/figaro.v $(CORE_SRC)
 TB_TOP_SRC = ../src/tb/tb_figaro.v
 
 SIM_SRC = ../src/sim/SB_LUT4.v
-
-ARACHNE_DEVICE = 1k
-PACKAGE        = tq144
+FPGA_SRC = $(TOP_SRC) ../src/synth/reset_gen.v ../src/synth/figaro_fpga.v
 
 ICETIME_DEVICE = hx1k
-PINS_FILE = config/pins.pcf
+PIN_SRC = ../src/synth/icestick.pcf
 
-PROG_BIN = iceprog
-TARGET_STEM = figaro
+TARGET_STEM = figaro_fpga
+BIN_FILE  = $(TARGET_STEM).bin
+JSON_FILE  = $(TARGET_STEM).json
+ASC_FILE  = $(TARGET_STEM).asc
+BLIF_FILE = $(TARGET_STEM).blif
 
 
 # Tools
@@ -64,30 +65,25 @@ LINT_FLAGS = +1364-2001ext+ --lint-only  -Wall -Wno-fatal -Wno-DECLFILENAME
 YOSYS_LOG  = synth.log
 YOSYS_ARGS = -v3 -l $(YOSYS_LOG)
 
-BIN_FILE  = $(TARGET_STEM).bin
-JSON_FILE  = $(TARGET_STEM).json
-ASC_FILE  = $(TARGET_STEM).asc
-BLIF_FILE = $(TARGET_STEM).blif
+PROG_BIN = iceprog
 
 
 # Targets.
-all:	lint-top sim-top
+all:	lint-top sim-top fpga
 
-#$(BIN_FILE):	$(ASC_FILE)
-#	icepack	$< $@
-#
-#$(JSON_FILE): $(VERILOG_SRCS)
-#	yosys $(YOSYS_ARGS) -p "synth_ice40 -json $(JSON_FILE)" $(VERILOG_SRCS)
-#
-#$(ASC_FILE): $(JSON_FILE)
-#	$(NEXTPNR_PATH)nextpnr-ice40 --ignore-loops --hx1k --package $(PACKAGE) --json $< \
-#         --pcf $(PINS_FILE) --asc $(ASC_FILE)
-#
-#prog:	$(BIN_FILE)
-#	$(PROG_BIN) $<
-#
-#timings:$(ASC_FILE)
-#	icetime -tmd $(ICETIME_DEVICE) $<
+fpga:   $(FPGA_SRC) $(PIN_SRC)
+	yosys $(YOSYS_ARGS) -p "synth_ice40 -json $(JSON_FILE)" $(FPGA_SRC)
+	$(NEXTPNR_PATH)nextpnr-ice40 --ignore-loops --hx1k --package $(PACKAGE) --json $< \
+         --pcf $(PIN_SRC) --asc $(ASC_FILE)
+
+$(BIN_FILE): $(ASC_FILE)
+	icepack	$< $@
+
+program: $(BIN_FILE)
+	$(PROG_BIN) $<
+
+timing:	$(ASC_FILE)
+	icetime -tmd $(ICETIME_DEVICE) $<
 
 
 sim-top:  $(TB_TOP_SRC) $(TOP_SRC) $(SIM_SRC)
@@ -102,7 +98,7 @@ clean:
 	rm -f sim-*
 	rm -f *.log
 	rm -f *.txt
-	rm -f $(BIN_FILE) $(ASC_FILE) $(BLIF_FILE) $(JSON_FILE) $(YOSYS_LOG)
+	rm -f $(BIN_FILE) $(ASC_FILE) $(JSON_FILE) $(YOSYS_LOG)
 
 
 help:
