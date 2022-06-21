@@ -70,20 +70,26 @@ PROG_BIN = iceprog
 
 
 # Targets.
-all:	lint-top sim-top fpga
+all:	lint-top sim-top synth
 
-fpga:   $(FPGA_SRC) $(PIN_SRC)
-	yosys $(YOSYS_ARGS) -p "synth_ice40 -json $(JSON_FILE)" $(FPGA_SRC)
+synth:  $(FPGA_SRC)
+	yosys $(YOSYS_ARGS) -p "synth_ice40 -json $(JSON_FILE)" $^
+
+
+$(ASC_FILE): $(JSON_FILE)
 	$(NEXTPNR_PATH)nextpnr-ice40 --ignore-loops --hx1k --package $(PACKAGE) --json $< \
          --pcf $(PIN_SRC) --asc $(ASC_FILE)
+
 
 $(BIN_FILE): $(ASC_FILE)
 	icepack	$< $@
 
-program: $(BIN_FILE)
+
+prog:	$(BIN_FILE)
 	$(PROG_BIN) $<
 
-timing:	$(ASC_FILE)
+
+timings:$(ASC_FILE)
 	icetime -tmd $(ICETIME_DEVICE) $<
 
 
