@@ -70,13 +70,13 @@ PROG_BIN = iceprog
 
 
 # Targets.
-all:	lint-top sim-top synth
+all:	lint-top sim-top synth pnr
 
 synth:  $(FPGA_SRC)
 	yosys $(YOSYS_ARGS) -p "synth_ice40 -json $(JSON_FILE)" $^
 
 
-$(ASC_FILE): $(JSON_FILE)
+pnr:	$(JSON_FILE)
 	$(NEXTPNR_PATH)nextpnr-ice40 --ignore-loops --hx1k --package $(PACKAGE) --json $< \
          --pcf $(PIN_SRC) --asc $(ASC_FILE)
 
