@@ -46,6 +46,7 @@ SIM_SRC = ../src/sim/SB_LUT4.v
 FPGA_SRC = $(TOP_SRC) ../src/synth/reset_gen.v ../src/synth/figaro_fpga.v
 
 ICETIME_DEVICE = hx1k
+PACKAGE = tq144
 PIN_SRC = ../src/synth/icestick.pcf
 
 TARGET_STEM = figaro_fpga
