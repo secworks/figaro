@@ -82,7 +82,7 @@ pnr:	$(JSON_FILE)
 
 
 pack:	$(ASC_FILE)
-	icepack	$< $@
+	icepack	$< $(BIN_FILE)
 
 
 prog:	$(BIN_FILE)
