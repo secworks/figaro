@@ -35,16 +35,16 @@
 //======================================================================
 
 module figaro_core(
-	           input wire 	        clk,
-                   input wire           reset_n,
+            input wire 	        clk,
+            input wire           reset_n,
 
-                   input wire           set_sample_rate,
-		   input wire [23 : 0]  sample_rate,
+            input wire           set_sample_rate,
+            input wire [23 : 0]  sample_rate,
 
-                   input wire           read_entropy,
-                   output wire [31 : 0] entropy,
+            input wire           read_entropy,
+            output wire [31 : 0] entropy,
 
-                   output wire          ready
+            output wire          ready
 	          );
 
 
@@ -126,13 +126,12 @@ module figaro_core(
          bit_ctr_reg         <= 5'h0;
          entropy_reg         <= 32'h0;
          ready_reg           <= 1'h0;
-       end
-       else begin
+       end else begin
          sample_rate_ctr_reg <= sample_rate_ctr_new;
 
-	 if (sample_rate_we) begin
-	   sample_rate_reg <= sample_rate;
-	 end
+        if (sample_rate_we) begin
+          sample_rate_reg <= sample_rate;
+        end
 
          if (bit_ctr_we) begin
            bit_ctr_reg <= bit_ctr_new;
@@ -155,8 +154,7 @@ module figaro_core(
   // After an entropy word has been read we wait 32 bits before
   // setting ready again, indicating that a new word is ready.
   //---------------------------------------------------------------
-  always @*
-    begin : ready_logic;
+  always @* begin : ready_logic;
       bit_ctr_new = 5'h0;
       bit_ctr_we  = 1'h0;
       ready_new   = 1'h0;
@@ -204,18 +202,14 @@ module figaro_core(
       end
 
       if (set_sample_rate) begin
-	bit_ctr_rst         = 1'h1;
-	sample_rate_we      = 1'h1;
+	      bit_ctr_rst         = 1'h1;
+	      sample_rate_we      = 1'h1;
         sample_rate_ctr_new = 24'h0;
-      end
-
-      else if (sample_rate_ctr_reg == sample_rate_reg) begin
+      end else if (sample_rate_ctr_reg == sample_rate_reg) begin
         sample_rate_ctr_new = 24'h0;
         entropy_we          = 1'h1;
         bit_ctr_inc         = 1'h1;
-      end
-
-      else begin
+      end else begin
         sample_rate_ctr_new = sample_rate_ctr_reg + 1'h1;
       end
     end

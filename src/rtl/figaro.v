@@ -104,31 +104,29 @@ module figaro(
   //
   // The interface command decoding logic.
   //----------------------------------------------------------------
-  always @*
-    begin : api
+  always @* begin : api
       core_read_entropy    = 1'h0;
       core_set_sample_rate = 1'h0;
       tmp_read_data        = 32'h0;
 
       if (cs) begin
-	if (we) begin
-	  if (address == ADDR_SAMPLE_RATE) begin
-	    core_set_sample_rate = 1'h1;
+        if (we) begin
+          if (address == ADDR_SAMPLE_RATE) begin
+            core_set_sample_rate = 1'h1;
           end
-	end
-
-	else begin
-	  if (address == ADDR_NAME0) begin
-	    tmp_read_data = CORE_NAME0;
+          
+        end	else begin
+          if (address == ADDR_NAME0) begin
+            tmp_read_data = CORE_NAME0;
           end
 
-	  if (address == ADDR_NAME1) begin
-	    tmp_read_data = CORE_NAME1;
-	  end
+          if (address == ADDR_NAME1) begin
+            tmp_read_data = CORE_NAME1;
+          end
 
-	  if (address == ADDR_VERSION) begin
-	    tmp_read_data = CORE_VERSION;
-	  end
+          if (address == ADDR_VERSION) begin
+            tmp_read_data = CORE_VERSION;
+          end
 
           if (address == ADDR_STATUS) begin
             tmp_read_data[STATUS_READY_BIT] = core_ready;
@@ -137,10 +135,11 @@ module figaro(
           if (address == ADDR_ENTROPY) begin
             tmp_read_data     = core_entropy;
             core_read_entropy = 1'h1;
-          end
-	end
-      end
-    end // api
+          end  
+      end 
+    end
+  end // api
+
 endmodule // figaro
 
 //======================================================================
